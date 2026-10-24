@@ -22,12 +22,12 @@
 </head>
 <body>
   <main class="app">
-    <header><h1>Druckkosten</h1><div class="header-actions"><button class="icon-btn" id="exportBtn">CSV</button><button class="primary" id="newBtn">＋ Druck</button></div></header>
+    <header><div></div><div class="header-actions"><button class="icon-btn" id="exportBtn">CSV</button><button class="primary" id="newBtn">＋ Druck</button></div></header>
     <section class="card"><div class="summary"><span>Gesamtkosten</span><span class="value" id="total">0,00 €</span></div><div class="summary"><span>Gespeicherte Drucke</span><span id="count">0</span></div></section>
     <div class="section-title">Druckhistorie</div><section class="card" id="tickets"></section>
     <p class="notice">Alle Daten bleiben nur auf diesem Gerät in deinem Browser gespeichert.</p>
   </main>
-  <dialog id="formDialog"><div class="modal"><div class="modal-head"><h2>Ticket erfassen</h2><button class="close" data-close="formDialog">Abbrechen</button></div>
+  <dialog id="formDialog"><div class="modal"><div class="modal-head"><h2 id="formTitle">Ticket erfassen</h2><button class="close" data-close="formDialog">Abbrechen</button></div>
     <form id="jobForm">
       <section class="form-section"><div class="form-label">Druck</div>
         <label class="field"><span class="field-name">Name</span><input name="name" value="Neuer Druck" required></label>
@@ -45,7 +45,7 @@
         <label class="field"><span class="field-name">Strompreis (€/kWh)</span><span class="hint">Der Preis aus deinem Stromtarif pro Kilowattstunde.</span><input name="electricity" type="number" inputmode="decimal" step="0.01" min="0" value="0.35" required></label>
       </section>
       <section class="form-section"><div class="form-label">Vorschau</div><div class="detail-card"><div class="line"><span>Filamentkosten</span><span id="prevFilament"></span></div><div class="line"><span>Stromkosten</span><span id="prevElectricity"></span></div><div class="line total"><span>Gesamtkosten</span><span id="prevTotal"></span></div></div></section>
-      <div class="form-footer"><button class="primary" type="submit">Ticket speichern</button></div>
+      <div class="form-footer"><button class="primary" id="saveTicket" type="submit">Ticket speichern</button></div>
     </form>
   </div></dialog>
   <dialog id="detailDialog"><div class="modal"><div class="modal-head"><button class="close" data-close="detailDialog">‹ Zurück</button></div><div id="detail"></div></div></dialog>
@@ -64,14 +64,23 @@
       const box = document.querySelector('#tickets');
       box.innerHTML = jobs.length ? jobs.sort((a,b)=>b.date.localeCompare(a.date)).map(j => {const c=cost(j);return `<button class="ticket" data-id="${j.id}"><div class="ticket-row"><span class="ticket-name">${esc(j.name)}</span><span class="ticket-cost">${euros(c.filament+c.electricity)}</span></div><div class="meta">${esc(j.printer)} · ${esc(j.material)} · ${j.grams.toLocaleString('de-DE')} g</div><div class="meta">${new Date(j.date+'T12:00:00').toLocaleDateString('de-DE')}</div></button>`}).join('') : '<div class="empty">Noch keine Drucke.<br>Lege deinen ersten Druck über „＋ Druck“ an.</div>';
     }
-    const form = document.querySelector('#jobForm'); const formDialog = document.querySelector('#formDialog');
+    const form = document.querySelector('#jobForm'); const formDialog = document.querySelector('#formDialog'); let editingId = null;
     function formValues() { const d=new FormData(form); return {duration:num(d.get('duration')), grams:num(d.get('grams')), filamentPrice:num(d.get('filamentPrice')), watts:num(d.get('watts')), electricity:num(d.get('electricity'))}; }
     function preview() { const c=cost(formValues()); document.querySelector('#prevFilament').textContent=euros(c.filament); document.querySelector('#prevElectricity').textContent=euros(c.electricity); document.querySelector('#prevTotal').textContent=euros(c.filament+c.electricity); }
-    document.querySelector('#newBtn').onclick=()=>{form.reset(); form.elements.date.value=new Date().toISOString().slice(0,10); preview(); formDialog.showModal()};
-    form.addEventListener('input',preview); form.addEventListener('submit',e=>{e.preventDefault();const d=new FormData(form),v=formValues(); jobs.push({id:crypto.randomUUID(),name:d.get('name'),printer:d.get('printer'),material:d.get('material'),date:d.get('date'),...v});save();render();formDialog.close()});
+    function openForm(job = null) {
+      editingId = job?.id ?? null;
+      document.querySelector('#formTitle').textContent = job ? 'Ticket bearbeiten' : 'Ticket erfassen';
+      document.querySelector('#saveTicket').textContent = job ? 'Änderungen speichern' : 'Ticket speichern';
+      form.reset();
+      if (job) Object.entries({name:job.name,printer:job.printer,material:job.material,date:job.date,duration:job.duration,grams:job.grams,filamentPrice:job.filamentPrice,watts:job.watts,electricity:job.electricity}).forEach(([name,value]) => form.elements[name].value = value);
+      else form.elements.date.value = new Date().toISOString().slice(0,10);
+      preview(); formDialog.showModal();
+    }
+    document.querySelector('#newBtn').onclick=()=>openForm();
+    form.addEventListener('input',preview); form.addEventListener('submit',e=>{e.preventDefault();const d=new FormData(form),v=formValues();const ticket={id:editingId || crypto.randomUUID(),name:d.get('name'),printer:d.get('printer'),material:d.get('material'),date:d.get('date'),...v};if(editingId) jobs=jobs.map(j=>j.id===editingId?ticket:j);else jobs.push(ticket);save();render();formDialog.close()});
     document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>document.querySelector('#'+b.dataset.close).close());
     document.querySelector('#tickets').onclick=e=>{const b=e.target.closest('[data-id]');if(b) showDetail(b.dataset.id)};
-    function showDetail(id) { const j=jobs.find(x=>x.id===id); if(!j)return; const c=cost(j),total=c.filament+c.electricity; document.querySelector('#detail').innerHTML=`<h1 class="detail-title">${esc(j.name)}</h1><section class="card detail-card"><h2>Druck</h2><div class="line"><span>Drucker</span><span>${esc(j.printer)}</span></div><div class="line"><span>Datum</span><span>${new Date(j.date+'T12:00:00').toLocaleDateString('de-DE')}</span></div><div class="line"><span>Material</span><span>${esc(j.material)}</span></div></section><section class="card detail-card"><h2>Verbrauch</h2><div class="line"><span>Druckdauer</span><span>${j.duration.toLocaleString('de-DE')} Stunden</span></div><div class="line"><span>Filament</span><span>${j.grams.toLocaleString('de-DE')} g</span></div><div class="line"><span>Filamentpreis</span><span>${euros(j.filamentPrice)} / kg</span></div><div class="line"><span>Leistungsaufnahme</span><span>${j.watts.toLocaleString('de-DE')} Watt</span></div><div class="line"><span>Strompreis</span><span>${euros(j.electricity)} / kWh</span></div></section><section class="card detail-card"><h2>Kostenaufstellung</h2><div class="line"><span>Filamentkosten</span><span>${euros(c.filament)}</span></div><div class="line"><span>Stromkosten</span><span>${euros(c.electricity)}</span></div><div class="line total"><span>Gesamtkosten</span><span>${euros(total)}</span></div></section><button class="delete" id="deleteTicket">Ticket löschen</button>`; document.querySelector('#deleteTicket').onclick=()=>{if(confirm('Dieses Ticket wirklich löschen?')){jobs=jobs.filter(x=>x.id!==id);save();render();document.querySelector('#detailDialog').close()}}; document.querySelector('#detailDialog').showModal(); }
+    function showDetail(id) { const j=jobs.find(x=>x.id===id); if(!j)return; const c=cost(j),total=c.filament+c.electricity; document.querySelector('#detail').innerHTML=`<h1 class="detail-title">${esc(j.name)}</h1><section class="card detail-card"><h2>Druck</h2><div class="line"><span>Drucker</span><span>${esc(j.printer)}</span></div><div class="line"><span>Datum</span><span>${new Date(j.date+'T12:00:00').toLocaleDateString('de-DE')}</span></div><div class="line"><span>Material</span><span>${esc(j.material)}</span></div></section><section class="card detail-card"><h2>Verbrauch</h2><div class="line"><span>Druckdauer</span><span>${j.duration.toLocaleString('de-DE')} Stunden</span></div><div class="line"><span>Filament</span><span>${j.grams.toLocaleString('de-DE')} g</span></div><div class="line"><span>Filamentpreis</span><span>${euros(j.filamentPrice)} / kg</span></div><div class="line"><span>Leistungsaufnahme</span><span>${j.watts.toLocaleString('de-DE')} Watt</span></div><div class="line"><span>Strompreis</span><span>${euros(j.electricity)} / kWh</span></div></section><section class="card detail-card"><h2>Kostenaufstellung</h2><div class="line"><span>Filamentkosten</span><span>${euros(c.filament)}</span></div><div class="line"><span>Stromkosten</span><span>${euros(c.electricity)}</span></div><div class="line total"><span>Gesamtkosten</span><span>${euros(total)}</span></div></section><button class="primary" id="editTicket" style="width:100%;margin-top:18px">Ticket bearbeiten</button><button class="delete" id="deleteTicket">Ticket löschen</button>`; document.querySelector('#editTicket').onclick=()=>{document.querySelector('#detailDialog').close();openForm(j)}; document.querySelector('#deleteTicket').onclick=()=>{if(confirm('Dieses Ticket wirklich löschen?')){jobs=jobs.filter(x=>x.id!==id);save();render();document.querySelector('#detailDialog').close()}}; document.querySelector('#detailDialog').showModal(); }
     document.querySelector('#exportBtn').onclick=()=>{if(!jobs.length)return;const header='Datum;Druck;Drucker;Dauer (h);Material;Filament (g);Filamentkosten (€);Stromkosten (€);Gesamt (€)';const rows=jobs.map(j=>{const c=cost(j);return [j.date,j.name,j.printer,j.duration,j.material,j.grams,c.filament,c.electricity,c.filament+c.electricity].map(x=>String(x).replaceAll(';',',')).join(';')});const blob=new Blob([[header,...rows].join('\n')],{type:'text/csv;charset=utf-8'});const file=new File([blob],'druckhistorie.csv',{type:blob.type});if(navigator.share&&navigator.canShare?.({files:[file]}))navigator.share({files:[file],title:'Druckhistorie'});else {const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='druckhistorie.csv';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),500)}};
     render();
   </script>
