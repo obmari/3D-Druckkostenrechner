@@ -17,19 +17,26 @@
     .ticket { display:block; width:100%; text-align:left; padding:15px 16px; border:0; border-bottom:1px solid var(--line); background:var(--card); color:var(--text); } .ticket:last-child { border-bottom:0 } .ticket-row { display:flex; justify-content:space-between; gap:12px; align-items:center; } .ticket-name { font-weight:700; font-size:17px } .ticket-cost { font-weight:750; color:var(--accent); font-size:17px } .meta { color:var(--muted); margin-top:5px; font-size:14px } .empty { padding:42px 22px; color:var(--muted); text-align:center; line-height:1.45 }
     dialog { border:0; padding:0; max-width:700px; width:100%; min-height:100%; margin:auto; background:var(--bg); color:var(--text); } dialog::backdrop { background:#0008 } .modal { padding:env(safe-area-inset-top) 16px calc(24px + env(safe-area-inset-bottom)); } .modal-head { display:flex; align-items:center; justify-content:space-between; padding:18px 2px; position:sticky; top:0; background:var(--bg); z-index:1; }.close { color:var(--accent); background:none; border:0; padding:10px 2px; font-weight:700 }
     .form-section { background:var(--card); border:1px solid var(--line); border-radius:15px; margin:12px 0; overflow:hidden } .form-label { padding:14px 16px 7px; font-size:14px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.05em } label.field { display:block; padding:10px 16px; border-top:1px solid var(--line) } label.field:first-of-type { border-top:0 } .field-name { display:block; font-weight:650; margin-bottom:5px } .hint { display:block; color:var(--muted); font-size:13px; line-height:1.3; margin:4px 0 8px } input { width:100%; border:1px solid var(--line); background:var(--bg); color:var(--text); border-radius:9px; padding:10px; min-height:42px; } input:focus { outline:2px solid var(--accent); outline-offset:1px } .form-footer { padding-top:8px } .form-footer .primary { width:100% }
-    .detail-title { margin:4px 0 18px; font-size:28px }.detail-card { padding:0 16px } .detail-card h2 { padding:17px 0 8px; color:var(--muted); font-size:14px; text-transform:uppercase; letter-spacing:.05em }.line { display:flex; justify-content:space-between; gap:14px; padding:11px 0; border-top:1px solid var(--line) }.line span:last-child { text-align:right }.total { font-size:18px; font-weight:750; color:var(--accent) }.delete { width:100%; color:var(--danger); background:var(--card); border:1px solid #e8b4af; border-radius:12px; min-height:46px; margin-top:20px; font-weight:700 }
+    .detail-title { margin:4px 0 18px; font-size:28px }.detail-card { padding:0 16px } .detail-card h2 { padding:17px 0 8px; color:var(--muted); font-size:14px; text-transform:uppercase; letter-spacing:.05em }.line { display:flex; justify-content:space-between; gap:14px; padding:11px 0; border-top:1px solid var(--line) }.line span:last-child { text-align:right }.total { font-size:18px; font-weight:750; color:var(--accent) }.delete:disabled { opacity:.45; cursor:default } .delete { width:100%; color:var(--danger); background:var(--card); border:1px solid #e8b4af; border-radius:12px; min-height:46px; margin-top:20px; font-weight:700 }
     .notice { margin:16px 2px 2px; color:var(--muted); font-size:13px; line-height:1.45 }
     .header-actions { flex-wrap:wrap; justify-content:flex-end } .warning { color:var(--danger) } .import-content { padding:16px; line-height:1.5 } .import-content ul { padding-left:20px } select { width:100%; padding:10px; background:var(--bg); color:var(--text); border:1px solid var(--line); border-radius:9px } .project-heading { padding:14px 16px; margin:0; background:var(--accent-light); color:var(--text); font-size:15px } .ticket-name,.line span { overflow-wrap:anywhere } #importMessage { white-space:pre-line } .import-preview { max-height:300px; overflow:auto } [hidden] { display:none!important }
   </style>
 </head>
 <body>
   <main class="app">
-    <header><div></div><div class="header-actions"><button class="icon-btn" id="importBtn">CSV importieren</button><button class="icon-btn" id="exportBtn">CSV exportieren</button><button class="primary" id="newBtn">＋ Druck</button></div></header>
+    <header><div></div><div class="header-actions"><button class="icon-btn" id="csvBtn" type="button" aria-haspopup="dialog" aria-controls="csvDialog">CSV</button><button class="icon-btn" id="imageBtn">Ticket aus Bild</button><button class="primary" id="newBtn">＋ Druck</button></div></header>
     <section class="card"><button class="summary summary-button" id="costBreakdownBtn" type="button" aria-haspopup="dialog" aria-controls="costDialog"><span>Gesamtkosten</span><span class="value" id="total">0,00 €</span></button><div class="summary"><span>Gespeicherte Drucke</span><span id="count">0</span></div></section>
     <div class="section-title">Druckhistorie</div><section class="card" id="tickets"></section>
     <p class="notice" id="costNotice"></p><p class="notice" id="feedback" role="status" aria-live="polite"></p>
     <p class="notice">Alle Daten bleiben nur auf diesem Gerät in deinem Browser gespeichert.</p>
+    <button class="delete" id="deleteAllTickets" type="button">Alle Tickets löschen</button>
   </main>
+  <dialog id="csvDialog"><div class="modal"><div class="modal-head"><h2>CSV</h2><button class="close" data-close="csvDialog">Schließen</button></div><section class="card import-content"><button class="primary" id="importBtn" type="button" style="width:100%;margin-bottom:12px">CSV importieren</button><button class="icon-btn" id="exportBtn" type="button" style="width:100%">CSV exportieren</button></section></div></dialog>
+  <dialog id="imageDialog"><div class="modal"><div class="modal-head"><h2>Ticket aus Bild</h2><button class="close" data-close="imageDialog">Schließen</button></div>
+    <section class="form-section"><label class="field"><span class="field-name">Bild des Druckverlaufs</span><input id="ticketImage" type="file" accept="image/png,image/jpeg,image/webp"></label><div class="import-content"><img id="imagePreview" hidden alt="Ausgewählter Druckverlauf" style="max-width:100%;max-height:420px;object-fit:contain"><p>Wähle ein gut lesbares Bild mit einem einzelnen Druckauftrag. Die Texterkennung läuft im Browser. Dafür werden Programm und Sprachdaten aus dem Internet geladen; das Bild wird nicht hochgeladen.</p><button type="button" class="icon-btn" id="recognizeImage" disabled>Text im Bild erkennen</button><p id="imageMessage" role="status" aria-live="polite"></p></div>
+    <label class="field"><span class="field-name">Erkannter Text</span><span class="hint">Du kannst Fehler korrigieren oder Text aus einem Bild hier einfügen.</span><textarea id="imageText" rows="10" style="width:100%;font:inherit;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:9px;padding:10px"></textarea></label></section>
+    <div class="form-footer"><button class="primary" id="useImageText" type="button">Ticket vorbereiten</button></div><p class="notice">Vor dem Speichern prüfst du alle Werte. Nicht erkannte Angaben bleiben leer.</p>
+  </div></dialog>
   <dialog id="importDialog"><div class="modal"><div class="modal-head"><h2>CSV in Tickets umwandeln</h2><button class="close" data-close="importDialog">Schließen</button></div>
     <section class="form-section"><div class="import-content">Wähle <strong>Druckauftraege.csv</strong> oder einen CSV-Export dieses Rechners. Jede Auftragszeile wird ein eigenes Ticket. Wiederholungsdrucke bleiben erhalten. Bereits importierte Aufträge werden übersprungen. Projektsummen und Filamentdetails enthalten keine vollständigen Aufträge und werden nicht importiert.</div>
       <label class="field"><span class="field-name">CSV-Dateien auswählen</span><input id="csvFiles" type="file" accept=".csv,text/csv" multiple></label>
@@ -45,7 +52,7 @@
   </div></dialog>
   <dialog id="costDialog"><div class="modal"><div class="modal-head"><h2>Gesamtkosten</h2><button class="close" data-close="costDialog">Schließen</button></div><section class="card detail-card"><div class="line"><span>Filamentkosten gesamt</span><span id="aggregateFilament"></span></div><div class="line"><span>Stromkosten gesamt</span><span id="aggregateElectricity"></span></div><div class="line total"><span>Gesamtsumme</span><span id="aggregateTotal"></span></div><div class="line"><span>Anzahl der Drucke</span><span id="aggregateCount"></span></div></section></div></dialog>
   <dialog id="formDialog"><div class="modal"><div class="modal-head"><h2 id="formTitle">Ticket erfassen</h2><button class="close" data-close="formDialog">Abbrechen</button></div>
-    <form id="jobForm">
+    <form id="jobForm"><section class="form-section import-content" id="formImageSection" hidden><img id="formImagePreview" alt="Bild zum Abgleich" style="max-width:100%;max-height:340px;object-fit:contain"><p id="imageDraftInfo"></p></section>
       <section class="form-section"><div class="form-label">Druck</div>
         <label class="field"><span class="field-name">Name</span><input name="name" value="Neuer Druck" required></label>
         <label class="field"><span class="field-name">Drucker</span><input name="printer" value="Bambu Lab P2S" required></label>
@@ -85,17 +92,20 @@ function cost(j){return {filament:known(j.grams)&&known(j.filamentPrice)?j.grams
 function costText(c){const complete=c.filament!==null&&c.electricity!==null;const amount=(c.filament??0)+(c.electricity??0);return complete?euros(amount):(c.filament===null&&c.electricity===null?'Kosten offen':euros(amount)+' · Teilsumme');}
 const dateText=d=>/^\d{4}-\d{2}-\d{2}$/.test(d)?new Date(d+'T12:00:00').toLocaleDateString('de-DE'):d;
 function persist(next){try{localStorage.setItem(key,JSON.stringify(next));jobs=next;return true;}catch(e){alert('Die Tickets konnten nicht gespeichert werden. Bitte prüfe den verfügbaren Browserspeicher.');return false;}}
+function sortedJobs(rows){
+ const time=j=>/^([01]\d|2[0-3]):[0-5]\d$/.test(j.start||'')?j.start:'';
+ return rows.map((job,index)=>({job,index})).sort((a,b)=>b.job.date.localeCompare(a.job.date)||time(b.job).localeCompare(time(a.job))||b.index-a.index).map(item=>item.job);
+}
 function render(){
  let filament=0,electricity=0,open=0;
  for(const j of jobs){const c=cost(j);filament+=c.filament??0;electricity+=c.electricity??0;if(c.filament===null||c.electricity===null)open++;}
+ $('#deleteAllTickets').disabled=jobs.length===0;
  $('#total').textContent=euros(filament+electricity)+(open?' · Teilsumme':'');$('#count').textContent=jobs.length;
  $('#aggregateFilament').textContent=euros(filament)+(jobs.some(j=>cost(j).filament===null)?' · Teilsumme':'');
  $('#aggregateElectricity').textContent=euros(electricity)+(jobs.some(j=>cost(j).electricity===null)?' · Teilsumme':'');
  $('#aggregateTotal').textContent=$('#total').textContent;$('#aggregateCount').textContent=jobs.length;
  $('#costNotice').textContent=open?`${open} Ticket(s) mit offenen Kostenangaben. Die Gesamtkosten enthalten nur berechenbare Teilbeträge.`:'';
- const groups=new Map();
- for(const j of jobs.slice().sort((a,b)=>(a.projectGroup||a.name).localeCompare(b.projectGroup||b.name,'de')||b.date.localeCompare(a.date)||(b.start||'').localeCompare(a.start||''))){const group=j.projectGroup||j.name;if(!groups.has(group))groups.set(group,[]);groups.get(group).push(j);}
- $('#tickets').innerHTML=jobs.length?Array.from(groups,([name,rows])=>`<h2 class="project-heading">${esc(name)} · ${rows.length} Ticket(s)</h2>`+rows.map(j=>`<button class="ticket" data-id="${esc(j.id)}"><div class="ticket-row"><span class="ticket-name">${esc(j.name)}</span><span class="ticket-cost">${costText(cost(j))}</span></div><div class="meta">${esc(j.printer)} · ${esc(j.material)} · ${quantity(j.grams,'g')}</div><div class="meta">${esc(dateText(j.date))}${j.start?' · '+esc(j.start):''}${j.plate?' · '+esc(j.plate):''} · <span class="${j.status==='Abgebrochen'?'warning':''}">${esc(j.status||'Erfolg')}</span></div>${j.importNote?'<div class="meta">Angaben prüfen · Details öffnen</div>':''}</button>`).join('')).join(''):'<div class="empty">Noch keine Drucke.<br>Importiere eine CSV oder lege einen Druck über „＋ Druck“ an.</div>';
+ $('#tickets').innerHTML=jobs.length?sortedJobs(jobs).map(j=>`<button class="ticket" data-id="${esc(j.id)}"><div class="ticket-row"><span class="ticket-name">${esc(j.name)}</span><span class="ticket-cost">${costText(cost(j))}</span></div><div class="meta">${esc(j.projectGroup||j.name)}</div><div class="meta">${esc(j.printer)} · ${esc(j.material)} · ${quantity(j.grams,'g')}</div><div class="meta">${esc(dateText(j.date))}${j.start?' · '+esc(j.start):''}${j.plate?' · '+esc(j.plate):''} · <span class="${j.status==='Abgebrochen'?'warning':''}">${esc(j.status||'Erfolg')}</span></div>${j.importNote?'<div class="meta">Angaben prüfen · Details öffnen</div>':''}</button>`).join(''):'<div class="empty">Noch keine Drucke.<br>Importiere eine CSV oder lege einen Druck über „＋ Druck“ an.</div>';
 }
 // Quoted CSV fields, escaped quotes, CRLF and embedded line breaks are retained.
 function parseCSV(text){
@@ -147,6 +157,7 @@ function prepareImport(files,defaults,existing){
  }
  return {tickets,errors,duplicates};
 }
+
 let importFiles=[],pending=null,readVersion=0;
 function refreshImport(){
  pending=null;$('#confirmImport').disabled=true;$('#importPreview').innerHTML='';
@@ -159,7 +170,8 @@ function refreshImport(){
   $('#confirmImport').disabled=!!pending.errors.length||!pending.tickets.length;
  }catch(e){$('#importMessage').textContent=e.message;}
 }
-$('#importBtn').onclick=()=>{$('#importDialog').showModal();refreshImport();};
+$('#csvBtn').onclick=()=>$('#csvDialog').showModal();
+$('#importBtn').onclick=()=>{$('#csvDialog').close();$('#importDialog').showModal();refreshImport();};
 $('#csvFiles').addEventListener('change',async e=>{
  const version=++readVersion;importFiles=[];pending=null;$('#confirmImport').disabled=true;$('#importMessage').textContent='Dateien werden gelesen …';$('#importPreview').innerHTML='';
  try{const files=Array.from(e.target.files);if(files.some(f=>f.size>10*1024*1024))throw Error('Eine Datei ist größer als 10 MB. Bitte eine kleinere CSV auswählen.');const read=await Promise.all(files.map(async f=>({name:f.name,text:await f.text()})));if(version!==readVersion)return;importFiles=read;refreshImport();}catch(error){if(version===readVersion)$('#importMessage').textContent='Datei konnte nicht gelesen werden: '+error.message;}
@@ -169,11 +181,61 @@ $('#confirmImport').onclick=()=>{
  refreshImport();if(!pending||pending.errors.length||!pending.tickets.length)return;
  const count=pending.tickets.length;if(!persist([...jobs,...pending.tickets]))return;render();$('#feedback').textContent=`${count} Tickets importiert.`;$('#importDialog').close();pending=null;importFiles=[];$('#csvFiles').value='';
 };
+let imageDraft=null,imageURL=null,imageVersion=0,ocrWorker=null,ocrLoading=null;
+function parseImageText(text){
+ const lines=text.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
+ const after=label=>{const i=lines.findIndex(x=>label.test(x));return i>=0?lines[i+1]||'':'';};
+ const model=after(/^Modellname\s*:?$/i),project=after(/^Projektname\s*:?$/i);
+ const result={name:model||project,projectGroup:model||project,sourceProject:project,printer:after(/^Drucker\s*:?$/i),material:'',date:'',start:'',end:'',endDate:'',duration:null,grams:null,displayedGrams:null,status:/abgebrochen/i.test(text)?'Abgebrochen':/\bErfolg\b/i.test(text)?'Erfolg':'Unbekannt',plate:after(/^Plattenname\s*:?$/i)};
+ const times=[...text.matchAll(/(\d{4})[\/-](\d{2})[\/-](\d{2})\s+(\d{2}):(\d{2})/g)];
+ if(times.length===2){try{const t=times.map(m=>({date:validDate(`${m[1]}-${m[2]}-${m[3]}`),time:validTime(`${m[4]}:${m[5]}`)}));const minutes=(Date.parse(t[1].date+'T'+t[1].time+':00Z')-Date.parse(t[0].date+'T'+t[0].time+':00Z'))/60000;if(minutes>=0&&minutes<=43200){Object.assign(result,{date:t[0].date,start:t[0].time,endDate:t[1].date,end:t[1].time,duration:minutes/60});}}catch(_){} }
+ const section=text.split(/Filamente\s*:?/i)[1]||'';
+ const materials=[...section.matchAll(/\b(PLA(?:[ -](?:Basic|Matte|Silk))?|PETG|ABS|ASA|TPU)\b/gi)];
+ const weights=[...section.matchAll(/\b(?:PLA(?:[ -](?:Basic|Matte|Silk))?|PETG|ABS|ASA|TPU)\s*[|I:]?\s*(\d+(?:[.,]\d+)?)\s*g\b/gi)];
+ if(materials.length)result.material=[...new Set(materials.map(m=>m[1].toUpperCase()))].join(' + ');
+ if(weights.length&&weights.length===materials.length){result.displayedGrams=Math.round(weights.reduce((sum,m)=>sum+Number(m[1].replace(',','.')),0)*100)/100;if(result.status!=='Abgebrochen')result.grams=result.displayedGrams;}
+ result.importNote='Aus einem Bild erkannt. Angaben vor dem Speichern prüfen.'+(result.status==='Abgebrochen'?' Abbruch: angezeigte Filamentmenge ist kein gesicherter Istverbrauch.':'')+(result.grams===null?' Filamentmenge offen.':'');return result;
+}
+async function loadOCR(){
+ if(window.Tesseract)return window.Tesseract;
+ if(!ocrLoading)ocrLoading=new Promise((resolve,reject)=>{const script=document.createElement('script');script.src='https://cdn.jsdelivr.net/npm/tesseract.js@6.0.1/dist/tesseract.min.js';script.crossOrigin='anonymous';const timer=setTimeout(()=>{script.remove();ocrLoading=null;reject(Error('Texterkennung konnte nicht geladen werden. Internetverbindung prüfen.'));},30000);script.onload=()=>{clearTimeout(timer);if(window.Tesseract)resolve(window.Tesseract);else{ocrLoading=null;reject(Error('Texterkennung nicht verfügbar.'));}};script.onerror=()=>{clearTimeout(timer);script.remove();ocrLoading=null;reject(Error('Texterkennung konnte nicht geladen werden. Internetverbindung prüfen.'));};document.head.appendChild(script);});
+ return ocrLoading;
+}
+$('#imageBtn').onclick=()=>$('#imageDialog').showModal();
+$('#ticketImage').addEventListener('change',e=>{
+ imageVersion++;if(imageURL)URL.revokeObjectURL(imageURL);imageURL=null;$('#imageText').value='';$('#imagePreview').hidden=true;$('#recognizeImage').disabled=true;$('#imageMessage').textContent='';
+ const file=e.target.files[0];if(!file)return;
+ if(!/^image\/(png|jpeg|webp)$/.test(file.type)){e.target.value='';$('#imageMessage').textContent='Bitte ein JPG-, PNG- oder WebP-Bild auswählen.';return;}
+ if(file.size>20*1024*1024){e.target.value='';$('#imageMessage').textContent='Das Bild ist größer als 20 MB. Bitte ein kleineres Bild verwenden.';return;}
+ imageURL=URL.createObjectURL(file);$('#imagePreview').src=imageURL;$('#imagePreview').hidden=false;$('#recognizeImage').disabled=false;$('#imageMessage').textContent='Bild bereit. Texterkennung starten oder Text aus dem Bild unten einfügen.';
+});
+$('#recognizeImage').onclick=async()=>{
+ if(!imageURL)return;const version=imageVersion,source=imageURL;$('#ticketImage').disabled=true;$('#recognizeImage').disabled=true;$('#useImageText').disabled=true;$('#imageMessage').textContent='Texterkennung wird geladen …';
+ try{
+  const api=await loadOCR();if(version!==imageVersion)return;
+  if(!ocrWorker)ocrWorker=await api.createWorker('deu+eng',1,{logger:m=>{if(version===imageVersion)$('#imageMessage').textContent=m.status==='recognizing text'?`Text wird gelesen: ${Math.round(m.progress*100)} %`:'Texterkennung wird vorbereitet …';}});
+  const {data}=await ocrWorker.recognize(source);if(version!==imageVersion)return;
+  $('#imageText').value=data.text;$('#imageMessage').textContent=data.text.trim()?'Text erkannt. Bitte prüfen und „Ticket vorbereiten“ wählen.':'Kein Text erkannt. Bitte ein schärferes Bild verwenden oder Angaben von Hand eintragen.';
+ }catch(error){if(version===imageVersion)$('#imageMessage').textContent=error.message+' Du kannst den Text auch von Hand einfügen.';}
+ finally{$('#ticketImage').disabled=false;$('#recognizeImage').disabled=!imageURL;$('#useImageText').disabled=false;}
+};
+$('#useImageText').onclick=()=>{
+ const text=$('#imageText').value;if(!text.trim()){$('#imageMessage').textContent='Bitte zuerst Text erkennen lassen oder Text aus dem Bild einfügen.';return;}
+ const draft=parseImageText(text);draft.sourceImage=$('#ticketImage').files[0]?.name||'Bildangaben';
+ $('#imageDialog').close();openForm();imageDraft=draft;
+ for(const name of ['name','printer','material','date','duration','grams','status'])form.elements[name].value=draft[name]??'';
+ $('#formTitle').textContent='Ticket aus Bild prüfen';$('#formImageSection').hidden=false;$('#formImagePreview').hidden=!imageURL;$('#formImagePreview').src=imageURL||'';
+ $('#imageDraftInfo').textContent=[draft.start?'Start: '+draft.date+' '+draft.start:'Start nicht erkannt',draft.end?'Ende: '+draft.endDate+' '+draft.end:'Ende nicht erkannt',draft.plate||'',draft.importNote].filter(Boolean).join(' · ');preview();
+};
+$('#formDialog').addEventListener('close',()=>{imageDraft=null;$('#formImageSection').hidden=true;});
+$('#imageDialog').addEventListener('close',()=>{imageVersion++;});
+
 const form=$('#jobForm'),formDialog=$('#formDialog');let editingId=null;
 for(const name of ['duration','grams','filamentPrice','watts','electricity']){form.elements[name].required=false;form.elements[name].step='any';}
 function formValues(){return Object.fromEntries(['duration','grams','filamentPrice','watts','electricity'].map(name=>[name,numberOrNull(form.elements[name].value)]));}
 function preview(){try{const c=cost(formValues());$('#prevFilament').textContent=euros(c.filament);$('#prevElectricity').textContent=euros(c.electricity);$('#prevTotal').textContent=costText(c);}catch(e){$('#prevTotal').textContent='Eingaben prüfen';}}
 function openForm(job=null){
+ imageDraft=null;$('#formImageSection').hidden=true;
  editingId=job?.id??null;$('#formTitle').textContent=job?'Ticket bearbeiten':'Ticket erfassen';$('#saveTicket').textContent=job?'Änderungen speichern':'Ticket speichern';form.reset();
  if(job)for(const name of ['name','printer','material','date','duration','grams','filamentPrice','watts','electricity','status'])form.elements[name].value=job[name]??(name==='status'?'Erfolg':'');
  else{const d=new Date();form.elements.date.value=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
@@ -181,14 +243,14 @@ function openForm(job=null){
 }
 $('#costBreakdownBtn').onclick=()=>$('#costDialog').showModal();$('#newBtn').onclick=()=>openForm();
 form.addEventListener('input',preview);form.addEventListener('submit',e=>{
- e.preventDefault();try{const old=jobs.find(j=>j.id===editingId);const ticket={...old,id:editingId||crypto.randomUUID(),name:form.elements.name.value.trim(),printer:form.elements.printer.value.trim(),material:form.elements.material.value.trim(),date:validDate(form.elements.date.value),status:form.elements.status.value,...formValues()};if(!ticket.name)throw Error('Bitte einen Namen eingeben.');if(!persist(editingId?jobs.map(j=>j.id===editingId?ticket:j):[...jobs,ticket]))return;render();formDialog.close();}catch(error){alert(error.message);}
+ e.preventDefault();try{const old=jobs.find(j=>j.id===editingId);const ticket={...(!editingId&&imageDraft?imageDraft:{}),...old,id:editingId||crypto.randomUUID(),name:form.elements.name.value.trim(),printer:form.elements.printer.value.trim(),material:form.elements.material.value.trim(),date:validDate(form.elements.date.value),status:form.elements.status.value,...formValues()};if(!ticket.name)throw Error('Bitte einen Namen eingeben.');if(!persist(editingId?jobs.map(j=>j.id===editingId?ticket:j):[...jobs,ticket]))return;render();formDialog.close();}catch(error){alert(error.message);}
 });
 document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>$('#'+b.dataset.close).close());
 $('#tickets').onclick=e=>{const b=e.target.closest('[data-id]');if(b)showDetail(b.dataset.id);};
 function showDetail(id){
  const j=jobs.find(x=>x.id===id);if(!j)return;const c=cost(j);
  const line=(label,value)=>`<div class="line"><span>${esc(label)}</span><span>${esc(value)}</span></div>`;
- $('#detail').innerHTML=`<h1 class="detail-title">${esc(j.name)}</h1><section class="card detail-card"><h2>Druck</h2>${line('Projekt',j.projectGroup||j.name)}${line('Status',j.status||'Erfolg')}${line('Drucker',j.printer)}${line('Datum',dateText(j.date))}${j.start?line('Start',j.start):''}${j.end?line('Ende',(j.endDate||j.date)+' '+j.end):''}${j.plate?line('Platte',j.plate):''}${line('Material',j.material)}</section><section class="card detail-card"><h2>Verbrauch und Preise</h2>${line('Druckdauer',quantity(j.duration,'Stunden'))}${line('Filament für Kosten',quantity(j.grams,'g'))}${known(j.displayedGrams)?line('Filament laut Anzeige',quantity(j.displayedGrams,'g')):''}${j.filament1Readability?line('Filamentposition 1',known(j.filament1)?quantity(j.filament1,'g'):j.filament1Readability):''}${j.filament2Readability&&j.filament2Readability!=='NICHT_VORHANDEN'?line('Filamentposition 2',known(j.filament2)?quantity(j.filament2,'g'):j.filament2Readability):''}${line('Filamentpreis',euros(j.filamentPrice)+' / kg')}${line('Leistungsaufnahme',quantity(j.watts,'Watt'))}${line('Strompreis',euros(j.electricity)+' / kWh')}</section><section class="card detail-card"><h2>Kostenaufstellung</h2>${line('Filamentkosten',euros(c.filament))}${line('Stromkosten',euros(c.electricity))}${line('Gesamtkosten',costText(c))}</section>${j.importNote?'<section class="card import-content"><strong>Hinweise aus dem Import</strong><p>'+esc(j.importNote)+'</p></section>':''}${j.sourceCSV?'<section class="card detail-card"><h2>Quelle</h2>'+line('Auftrag',j.sourceOrderId||'Ohne ID')+line('CSV',j.sourceCSV)+line('Bild',j.sourceImage||'Nicht angegeben')+(j.sourceProject?line('Projektname laut Anzeige',j.sourceProject):'')+'</section>':''}<button class="primary" id="editTicket" style="width:100%;margin-top:18px">Ticket bearbeiten</button><button class="delete" id="deleteTicket">Ticket löschen</button>`;
+ $('#detail').innerHTML=`<h1 class="detail-title">${esc(j.name)}</h1><section class="card detail-card"><h2>Druck</h2>${line('Projekt',j.projectGroup||j.name)}${line('Status',j.status||'Erfolg')}${line('Drucker',j.printer)}${line('Datum',dateText(j.date))}${j.start?line('Start',j.start):''}${j.end?line('Ende',(j.endDate||j.date)+' '+j.end):''}${j.plate?line('Platte',j.plate):''}${line('Material',j.material)}</section><section class="card detail-card"><h2>Verbrauch und Preise</h2>${line('Druckdauer',quantity(j.duration,'Stunden'))}${line('Filament für Kosten',quantity(j.grams,'g'))}${known(j.displayedGrams)?line('Filament laut Anzeige',quantity(j.displayedGrams,'g')):''}${j.filament1Readability?line('Filamentposition 1',known(j.filament1)?quantity(j.filament1,'g'):j.filament1Readability):''}${j.filament2Readability&&j.filament2Readability!=='NICHT_VORHANDEN'?line('Filamentposition 2',known(j.filament2)?quantity(j.filament2,'g'):j.filament2Readability):''}${line('Filamentpreis',euros(j.filamentPrice)+' / kg')}${line('Leistungsaufnahme',quantity(j.watts,'Watt'))}${line('Strompreis',euros(j.electricity)+' / kWh')}</section><section class="card detail-card"><h2>Kostenaufstellung</h2>${line('Filamentkosten',euros(c.filament))}${line('Stromkosten',euros(c.electricity))}${line('Gesamtkosten',costText(c))}</section>${j.importNote?'<section class="card import-content"><strong>Hinweise aus dem Import</strong><p>'+esc(j.importNote)+'</p></section>':''}${j.sourceCSV||j.sourceImage?'<section class="card detail-card"><h2>Quelle</h2>'+line('Auftrag',j.sourceOrderId||'Ohne ID')+line('Import',j.sourceCSV||'Bildimport')+line('Bild',j.sourceImage||'Nicht angegeben')+(j.sourceProject?line('Projektname laut Anzeige',j.sourceProject):'')+'</section>':''}<button class="primary" id="editTicket" style="width:100%;margin-top:18px">Ticket bearbeiten</button><button class="delete" id="deleteTicket">Ticket löschen</button>`;
  $('#editTicket').onclick=()=>{$('#detailDialog').close();openForm(j);};$('#deleteTicket').onclick=()=>{if(confirm('Dieses Ticket wirklich löschen?')&&persist(jobs.filter(x=>x.id!==id))){render();$('#detailDialog').close();}};$('#detailDialog').showModal();
 }
 function exportCSV(rows){const encode=v=>{const s=v==null?'':typeof v==='number'?String(v).replace('.',','):String(v);return /[;"\r\n]/.test(s)?'"'+s.replaceAll('"','""')+'"':s;};return '\uFEFF'+rows.map(r=>r.map(encode).join(';')).join('\r\n')+'\r\n';}
@@ -196,7 +258,26 @@ function exportRows(){
  const header=['Datum','Druck','Drucker','Dauer (h)','Material','Filament (g)','Filamentpreis_EUR_kg','Leistungsaufnahme_W','Strompreis_EUR_kWh','Status','Projektgruppe','Projekt_ID','Auftrag_ID','Start','Enddatum','Ende','Platte','Quelle_Bild','Projektname_Anzeige','Hinweis','Filament_Anzeige_gesamt_g','Filament_1_g','Filament_2_g','Filament_1_Lesbarkeit','Filament_2_Lesbarkeit','Filament_Istverbrauch_Abbruch_g','Filamentkosten (€)','Stromkosten (€)','Gesamt (€)'];
  return [header,...jobs.map(j=>{const c=cost(j);return [j.date,j.name,j.printer,j.duration,j.material,j.grams,j.filamentPrice,j.watts,j.electricity,j.status||'Erfolg',j.projectGroup||j.name,j.projectId,j.sourceOrderId,j.start,j.endDate,j.end,j.plate,j.sourceImage,j.sourceProject,j.importNote,j.displayedGrams,j.filament1,j.filament2,j.filament1Readability,j.filament2Readability,j.status==='Abgebrochen'?j.grams:null,c.filament,c.electricity,c.filament===null||c.electricity===null?null:c.filament+c.electricity];})];
 }
-$('#exportBtn').onclick=async()=>{if(!jobs.length){$('#feedback').textContent='Noch keine Tickets zum Exportieren.';return;}const file=new File([exportCSV(exportRows())],'druckhistorie.csv',{type:'text/csv;charset=utf-8'});try{if(navigator.share&&navigator.canShare?.({files:[file]}))await navigator.share({files:[file],title:'Druckhistorie'});else{const url=URL.createObjectURL(file),a=document.createElement('a');a.href=url;a.download=file.name;a.click();setTimeout(()=>URL.revokeObjectURL(url),5000);}}catch(e){if(e.name!=='AbortError')$('#feedback').textContent='Export fehlgeschlagen: '+e.message;}};
+$('#exportBtn').onclick=()=>{
+ $('#csvDialog').close();
+ if(!jobs.length){$('#feedback').textContent='Noch keine Tickets zum Exportieren.';return;}
+ let url=null,link=null;
+ try{
+  const blob=new Blob([exportCSV(exportRows())],{type:'text/csv;charset=utf-8'});
+  url=URL.createObjectURL(blob);link=document.createElement('a');
+  link.href=url;link.download='druckhistorie.csv';link.hidden=true;
+  document.body.appendChild(link);link.click();
+  $('#feedback').textContent='CSV-Download angefordert. Falls keine Datei erscheint, bitte die Downloadfreigabe deines Browsers prüfen.';
+ }catch(error){$('#feedback').textContent='CSV-Download konnte nicht gestartet werden: '+error.message;}
+ finally{if(link)link.remove();if(url)setTimeout(()=>URL.revokeObjectURL(url),60000);}
+};
+$('#deleteAllTickets').onclick=()=>{
+ if(!jobs.length)return;
+ if(!confirm(`Alle ${jobs.length} Tickets wirklich dauerhaft löschen? Diese Aktion kann nicht rückgängig gemacht werden.`))return;
+ if(!persist([]))return;
+ pending=null;render();$('#feedback').textContent='Alle Tickets wurden gelöscht.';
+};
+
 render();
 
   </script>
